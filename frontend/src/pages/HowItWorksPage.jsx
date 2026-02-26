@@ -1,5 +1,4 @@
 import { Link, useNavigate } from 'react-router-dom';
-import arrowBack from '../assets/images/arrow-back.svg';
 
 const HowItWorksPage = () => {
   const navigate = useNavigate();
@@ -8,42 +7,57 @@ const HowItWorksPage = () => {
     <div className="how-it-works-page">
       <div className="how-it-works-container">
         <div className="content-wrapper">
-          <div className="generation-back" onClick={() => navigate('/')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/'); } }} aria-label="Back to headlines">
-            <img src={arrowBack} alt="" className="back-arrow" width="16" height="16" />
-            <span className="back-text">Back to headlines</span>
-          </div>
-
-          <div className="how-it-works-hero">
-            <h1 className="how-it-works-title">How it works</h1>
-            <p className="how-it-works-subtext"><a href="https://github.com/wilsonskinner/cartoongen" target="_blank" rel="noopener noreferrer" className="footer-link"> View Github repository</a></p>
+          <div className="hero-section hero-section--reduced-bottom">
+            <h1 className="hero-title">How it works</h1>
+            <div className="hero-content">
+              <div className="hero-subtitle-container">
+                <div
+                  className="generation-back"
+                  onClick={() => navigate('/')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/'); } }}
+                  aria-label="Back to headlines"
+                >
+                  <span className="back-text">Back to headlines</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="how-it-works-content">
             <section className="how-it-works-section">
-              <h2 className="how-it-works-h2">Pick a headline</h2>
+              <h2 className="how-it-works-h2">Overview</h2>
               <p className="how-it-works-p">
-                On the home page you’ll see a list of today’s top news headlines from sources like the New York Times, NPR, and others. Each headline is a real story that was published recently. Tap or click any headline to turn it into a cartoon.
+                CartoonGen pulls the top three headlines from five news outlets once each morning and lets users generate a satirical cartoon from the headlines.
               </p>
             </section>
 
             <section className="how-it-works-section">
-              <h2 className="how-it-works-h2">We draw the cartoon for you</h2>
+              <h2 className="how-it-works-h2">RSS Feeds</h2>
               <p className="how-it-works-p">
-                After you choose a headline, our system reads the story and creates a single-panel political cartoon that captures the idea in a simple, visual way. You don’t need to draw anything—the cartoon is generated in a few seconds. You can then download it, copy it, or try again to get a different take.
+                Headlines and summaries are pulled from public RSS feeds by a Python script that runs once per day at 8am PST via Vercel Cron. The script fetches the RSS feeds from five news outlets and stores each headline, summary, URL, and publish date in a Neon database. The site only displays today's headlines.
               </p>
             </section>
 
             <section className="how-it-works-section">
-              <h2 className="how-it-works-h2">How the site was built</h2>
+              <h2 className="how-it-works-h2">Image Generation</h2>
               <p className="how-it-works-p">
-                CartoonGen started as a project at a San Francisco hackathon. The app pulls in real headlines from news feeds, then uses an AI image model to illustrate them in a cartoon style. The goal is to make it easy for anyone to see a quick, satirical take on the news—no design or coding skills required.
+                Images are generated using Google's Gemini 2.5 Flash Image (Nano Banana). When the user clicks a headline, the app inserts the headline and its summary into a predefined prompt that contains instructions for the political cartoon style. The backend then sends this prompt to the Gemini API and returns the generated image for the user to download or copy. Sensitive or disturbing images are not generated or shown to users.
               </p>
             </section>
 
             <section className="how-it-works-section">
-              <h2 className="how-it-works-h2">A note on limits and safety</h2>
+              <h2 className="how-it-works-h2">Tech Stack</h2>
               <p className="how-it-works-p">
-                To keep the service fast and fair for everyone, we limit how many cartoons each person can generate in a short period. Sometimes the AI may decline to illustrate a headline if it touches on sensitive topics; in those cases you’ll see a short message and can try a different headline instead.
+                The frontend is built with React and Vite. The backend is a Python API built with FastAPI. It pulls RSS feeds, communicates with the Gemini API for image generation, and serves data to the frontend. Headlines and related metadata are stored in a Neon database. The app is deployed on Vercel, which also runs the daily RSS ingestion job.
+              </p>
+            </section>
+
+            <section className="how-it-works-section">
+              <h2 className="how-it-works-h2">Origin Story</h2>
+              <p className="how-it-works-p">
+              CartoonGen started at a three hour SF hackathon in fall 2025. My partner Aryan Dagnas and I initially set out to build an app that used Sora to transform news headlines into short videos, but the API costs were too high, so we pivoted to image generation. After the hackathon ended, I continued building the project on my own. I integrated live RSS feeds, set up a daily cron job, and connected the Gemini API to generate satirical images from real headlines. You can explore the full codebase on <a href="https://github.com/wilsskin/cartoon-gen" target="_blank" rel="noopener noreferrer" className="footer-link how-it-works-github-link">GitHub</a>.
               </p>
             </section>
           </div>

@@ -50,9 +50,26 @@ const LandingPage = ({ newsItems, isLoading }) => {
   const [selectedFeed, setSelectedFeed] = useState(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [articleTooltipId, setArticleTooltipId] = useState(null);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
+  const articleTooltipTimeoutRef = useRef(null);
   const navigate = useNavigate();
+
+  const TOOLTIP_DELAY_MS = 300;
+
+  const showArticleTooltip = (itemId) => {
+    if (articleTooltipTimeoutRef.current) clearTimeout(articleTooltipTimeoutRef.current);
+    articleTooltipTimeoutRef.current = setTimeout(() => setArticleTooltipId(itemId), TOOLTIP_DELAY_MS);
+  };
+
+  const hideArticleTooltip = () => {
+    if (articleTooltipTimeoutRef.current) {
+      clearTimeout(articleTooltipTimeoutRef.current);
+      articleTooltipTimeoutRef.current = null;
+    }
+    setArticleTooltipId(null);
+  };
 
   // Close dropdown when clicking outside (anywhere except the dropdown itself)
   useEffect(() => {
@@ -138,6 +155,10 @@ const LandingPage = ({ newsItems, isLoading }) => {
     };
   }, [galleryOpen, closeGallery, galleryPrev, galleryNext]);
 
+  useEffect(() => () => {
+    if (articleTooltipTimeoutRef.current) clearTimeout(articleTooltipTimeoutRef.current);
+  }, []);
+
   return (
     <div className="landing-page">
       <div className="landing-container">
@@ -149,7 +170,7 @@ const LandingPage = ({ newsItems, isLoading }) => {
             <div className="hero-content">
               <div className="hero-subtitle-container">
                 <div className="hero-subtitle">
-                  Generate political cartoons from todays top headlines
+                  Generate political cartoons from today's top headlines
                 </div>
               </div>
               <div className="hero-images-container">
@@ -295,9 +316,13 @@ const LandingPage = ({ newsItems, isLoading }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="news-item-meta"
+                      aria-label="View article"
+                      onMouseEnter={() => showArticleTooltip(item.id)}
+                      onMouseLeave={hideArticleTooltip}
                     >
                       <img src={FEED_LOGOS[item.feedId]} alt="" className="news-item-logo" />
                       <span className="news-item-category">{FEED_LABELS[item.feedId] || item.category}</span>
+                      <span className="generation-action-tooltip" data-visible={articleTooltipId === item.id}>View article</span>
                     </a>
                   </div>
                 </div>

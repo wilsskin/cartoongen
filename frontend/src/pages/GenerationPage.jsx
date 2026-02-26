@@ -40,8 +40,10 @@ const GenerationPage = ({ newsItems, isLoading }) => {
   const [errorDetails, setErrorDetails] = useState(null); // { code, message, status, model, requestId, details }
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [tooltip, setTooltip] = useState(null); // 'download' | 'copy' | 'regenerate'
+  const [sourceLinkTooltipVisible, setSourceLinkTooltipVisible] = useState(false);
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const tooltipTimeoutRef = useRef(null);
+  const sourceLinkTooltipTimeoutRef = useRef(null);
   const copyHideTimeoutRef = useRef(null);
   const copyConfirmedRef = useRef(false);
   const lastHeadlineIdRef = useRef(null);
@@ -119,6 +121,19 @@ const GenerationPage = ({ newsItems, isLoading }) => {
     setTooltip(null);
   };
 
+  const showSourceLinkTooltip = () => {
+    if (sourceLinkTooltipTimeoutRef.current) clearTimeout(sourceLinkTooltipTimeoutRef.current);
+    sourceLinkTooltipTimeoutRef.current = setTimeout(() => setSourceLinkTooltipVisible(true), TOOLTIP_DELAY_MS);
+  };
+
+  const hideSourceLinkTooltip = () => {
+    if (sourceLinkTooltipTimeoutRef.current) {
+      clearTimeout(sourceLinkTooltipTimeoutRef.current);
+      sourceLinkTooltipTimeoutRef.current = null;
+    }
+    setSourceLinkTooltipVisible(false);
+  };
+
   const handleCopyImage = () => {
     if (!currentImageUrl || isGenerating || error) return;
     if (copyConfirmed) {
@@ -127,16 +142,41 @@ const GenerationPage = ({ newsItems, isLoading }) => {
       setCopyConfirmed(false);
       copyConfirmedRef.current = false;
     }
-    fetch(currentImageUrl)
-      .then((res) => res.blob())
-      .then((blob) => navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]))
-      .then(() => {
-        clearCopyHideTimeout();
-        copyConfirmedRef.current = true;
-        setCopyConfirmed(true);
-        setTooltip('copy');
-      })
-      .catch(() => {});
+
+    const onCopySuccess = () => {
+      clearCopyHideTimeout();
+      copyConfirmedRef.current = true;
+      setCopyConfirmed(true);
+      setTooltip('copy');
+      copyHideTimeoutRef.current = setTimeout(() => {
+        setTooltip(null);
+        setCopyConfirmed(false);
+        copyConfirmedRef.current = false;
+        copyHideTimeoutRef.current = null;
+      }, 1500);
+    };
+
+    try {
+      if (currentImageUrl.startsWith('data:')) {
+        const [header, base64] = currentImageUrl.split(',');
+        const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: mime });
+        navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+          .then(onCopySuccess)
+          .catch(() => {});
+      } else {
+        fetch(currentImageUrl)
+          .then((res) => res.blob())
+          .then((blob) => navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]))
+          .then(onCopySuccess)
+          .catch(() => {});
+      }
+    } catch {
+      // Clipboard API not available
+    }
   };
 
   const hideTooltipAndCopyState = () => {
@@ -182,16 +222,18 @@ const GenerationPage = ({ newsItems, isLoading }) => {
   useEffect(() => () => {
     clearTooltipTimeout();
     clearCopyHideTimeout();
+    if (sourceLinkTooltipTimeoutRef.current) clearTimeout(sourceLinkTooltipTimeoutRef.current);
   }, []);
 
   const handleGenerateImage = () => {
     if (!selectedNews) return;
 
-    setCurrentImageUrl(''); // Clear old image so only loading shows until new image arrives
+    setCurrentImageUrl('');
     setIsGenerating(true);
     setError('');
     setErrorDetails(null);
     setIsRateLimited(false);
+    hideTooltip();
 
     axios.post(`${API_BASE_URL}/api/generate-image`, {
       headlineId: selectedNews.id,
@@ -370,12 +412,16 @@ const GenerationPage = ({ newsItems, isLoading }) => {
               target="_blank"
               rel="noopener noreferrer"
               className="generation-source-link"
+              aria-label="View article"
+              onMouseEnter={showSourceLinkTooltip}
+              onMouseLeave={hideSourceLinkTooltip}
             >
               <img
                 src={FEED_LOGOS[selectedNews.feedId]}
                 alt={selectedNews.category || 'News source'}
                 className="generation-source-logo"
               />
+              <span className="generation-action-tooltip" data-visible={sourceLinkTooltipVisible}>View article</span>
             </a>
           </div>
 
@@ -443,8 +489,9 @@ const GenerationPage = ({ newsItems, isLoading }) => {
                   type="button"
                   className="generation-action generation-action-regenerate"
                   aria-label="Regenerate cartoon"
-                  onClick={() => {
+                  onClick={(e) => {
                     hideTooltip();
+                    e.currentTarget.blur();
                     handleGenerateImage();
                   }}
                   onMouseEnter={() => showTooltipAfterDelay('regenerate')}

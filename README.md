@@ -1,41 +1,34 @@
 # CartoonGen
 
-Generate political cartoons from today's top headlines using AI.
+Generate political cartoons from today's top headlines.
+
+**Live app:** [https://cartoon-gen1.vercel.app/](https://cartoon-gen1.vercel.app/)
 
 ## What It Does
 
-CartoonGen pulls the latest headlines from major news outlets (WSJ, NYT, NBC, Fox, NPR), displays them in a clean interface, and lets you generate satirical cartoon illustrations for any headline. Click a headline to see an AI-generated political cartoon based on that story.
+CartoonGen pulls the top three headlines from five major news outlets once each morning and lets users generate a satirical cartoon from any of the news headlines.
 
 ## How It Works
 
-1. **Headlines** — A daily cron job fetches the top 3 stories from each RSS feed and stores them in a Neon Postgres database.
-2. **Browse** — The landing page shows today's headlines. You can filter by news source (e.g. NYT, NPR, Fox, NBC, WSJ) and use More/Less to show 5 at a time.
-3. **Generate** — Click any headline to go to the generation page. The app generates a satirical cartoon for that story using Google's Gemini API. You can download, copy, or regenerate.
-4. **How it works** — The footer links to an explainer page with the same layout; it includes a link to the GitHub repo.
+### RSS Feeds
 
-## Quick Start
+Headlines and summaries are pulled from public RSS feeds by a Python script that runs once per day around 8am Pacific time via Vercel Cron (to stay within Vercel's free tier limits). The script fetches the RSS feeds from all five news outlets and stores each headline, summary, URL, and publish date in a Neon database. The site only shows today's headlines.
 
-### Local Development
+### Image Generation
 
-**Backend:**
-```bash
-cd backend
-pip3 install -r requirements.txt
-python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+Images are generated using Google's Gemini 2.5 Flash Image (also known as Nano Banana). When the user clicks a headline, the app compiles a prompt that includes instructions for the political cartoon style and adds that headline and its summary. The app then calls the Gemini API with the prompt and returns the generated image so the user can download or copy it. Sensitive or disturbing images are not generated or shown to users.
 
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Tech Stack
 
-Or run both together:
-```bash
-cd frontend
-npm run dev:full
-```
+The frontend is built with React and Vite. The backend is a Python API built with FastAPI. It pulls RSS feeds, talks to the Gemini API for image generation, and serves the app. Headlines and their data are stored in a Neon Postgres database. The app is hosted on Vercel, which also runs the daily RSS job.
+
+### Idea Origin
+
+The idea for CartoonGen came from a 3-hour SF hackathon in fall 2025. My partner Aryan Dagnas and I were inspired by the Sora videos flooding the internet and wanted to generate videos of current events, but the Sora API was too expensive, so we pivoted to image generation. Three hours wasn't enough to finish, so I took our prototype and continued on my own. I integrated live RSS feeds, set up a daily cron, and wired up the Gemini API to generate images from daily headlines. To learn more, check out the GitHub repo.
+
+## Built With
+
+React, Vite, FastAPI, Neon Postgres, Gemini API, and Vercel.
 
 ## Project Structure
 
@@ -47,4 +40,10 @@ npm run dev:full
 
 For deployment details, Vercel setup, and integration specifics, see **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
-**Environment variables:** Set `DATABASE_URL`, `CRON_SECRET`, and (for image generation) `GEMINI_API_KEY`. On Vercel: Project Settings → Environment Variables. Locally: create `backend/.env` with the same names. Image generation uses the Gemini API; free-tier limits (e.g. 429 rate limit, quota exceeded) are documented in ARCHITECTURE.md.
+## Author
+
+Built by [Wilson Skinner](https://wilsonskinner.com/).
+
+## Acknowledgments
+
+Special thanks to Aryan Dagnas for the hackathon partnership that sparked the idea for CartoonGen.
