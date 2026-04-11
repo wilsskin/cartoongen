@@ -2,7 +2,7 @@
 
 Generate political cartoons from today's top headlines.
 
-**Live app:** [https://cartoon-gen1.vercel.app/](https://cartoon-gen1.vercel.app/)
+**Live app:** (https://cartoongen-ai.vercel.app/)
 
 ## What It Does
 
